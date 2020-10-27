@@ -35,7 +35,7 @@ With the `Dockerfile` as follows:
 
 ```dockerfile
 # Note: You can use any Debian/Ubuntu based image you want.
-FROM vscode-devcontainer:latest
+FROM nanomathias/vscode-devcontainer:latest
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
