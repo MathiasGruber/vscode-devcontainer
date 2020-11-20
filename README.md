@@ -25,6 +25,8 @@ services:
       - ..:/workspace:cached
       # One-way volume to use node_modules from inside image
       - /frontend/node_modules
+      # Do not set up git each time
+      - ~/.gitconfig:/root/.gitconfig
 
     # Overrides default command so things don't shut down after the process ends.
     entrypoint: /usr/local/share/docker-init.sh
