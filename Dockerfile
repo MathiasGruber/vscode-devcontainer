@@ -56,6 +56,9 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
 # Git update alias
 RUN git config --global alias.update '!git pull --rebase && git submodule update --init --recursive'
 
+# Terraform linting (taken from https://github.com/antonbabenko/pre-commit-terraform)
+RUN curl https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
