@@ -47,7 +47,7 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     && apt-get install -y software-properties-common --no-install-recommends \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     && apt-get update \
-    && apt-get -y --no-install-recommends install terraform \
+    && apt-get -y --no-install-recommends install terraform g++ gcc libc6-dev libffi-dev libgmp-dev make xz-utils zlib1g-dev git gnupg netbase \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -58,6 +58,10 @@ RUN git config --global alias.update '!git pull --rebase && git submodule update
 
 # Terraform linting (taken from https://github.com/antonbabenko/pre-commit-terraform)
 RUN curl https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+# Install hadolint
+RUN curl -sSL https://get.haskellstack.org/ | sh
+RUN stack upgrade && git clone https://github.com/hadolint/hadolint && cd hadolint && stack install
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
