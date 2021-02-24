@@ -63,6 +63,13 @@ RUN curl https://raw.githubusercontent.com/terraform-linters/tflint/master/insta
 RUN curl -sSL https://get.haskellstack.org/ | sh
 RUN stack upgrade && git clone https://github.com/hadolint/hadolint && cd hadolint && stack install
 
+# Get golang installed. See: https://stackoverflow.com/questions/52056387/how-to-install-go-in-alpine-linux
+ARG GOLANG_VERSION=1.16
+RUN wget https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
+RUN go version
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
