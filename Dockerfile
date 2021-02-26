@@ -70,6 +70,11 @@ RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
 RUN go version
 
+# Install tfdocs
+RUN go get github.com/terraform-docs/terraform-docs@v0.11.2
+RUN TFDOCS=$(go env GOPATH)/bin
+ENV PATH=$PATH:$TFDOCS
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
