@@ -1,6 +1,7 @@
 # vscode-devcontainer
 
-Docker image for default vscode devcontainer image with node.js, terraform, etc. installed
+Docker image for default vscode devcontainer image with node.js, terraform, etc. installed. Based upon the MS maintained `docker-from-docker` container:
+https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-from-docker
 
 # Use in docker-compose
 
