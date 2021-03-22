@@ -74,8 +74,16 @@ RUN go version
 
 # Install tfdocs
 RUN go get github.com/terraform-docs/terraform-docs@v0.11.2
-RUN TFDOCS=$(go env GOPATH)/bin
-ENV PATH=$PATH:$TFDOCS
+ENV PATH=$PATH:"/root/go/bin"
+
+# Install other small packages
+RUN apt-get update \
+    # Install additional small packages at the end
+    && apt-get -y --no-install-recommends install -y exa \
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \

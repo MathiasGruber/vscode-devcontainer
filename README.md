@@ -50,4 +50,8 @@ FROM nanomathias/vscode-devcontainer:latest
 ```bash
 # Build docker image
 docker build --tag vscode-devcontainer .
+
+# Run docker image to test insides
+docker run -d --name localdevcontainer vscode-devcontainer
+docker exec -it localdevcontainer bash
 ```
