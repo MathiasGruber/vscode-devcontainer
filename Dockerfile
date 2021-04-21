@@ -94,6 +94,17 @@ RUN kubectl version --client
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
 RUN chmod 700 get_helm.sh && ./get_helm.sh
 
+# Install source to image (s2i)
+RUN mkdir /tmp/s2i/ && cd /tmp/s2i/  && \
+  curl -s https://api.github.com/repos/openshift/source-to-image/releases/latest \
+  | grep browser_download_url \
+  | grep linux-amd64 \
+  | cut -d '"' -f 4 \
+  | wget -qi - && \
+  tar xvf source-to-image*.gz && \
+  sudo mv s2i /usr/local/bin && \
+  rm -rf /tmp/s2i/
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
