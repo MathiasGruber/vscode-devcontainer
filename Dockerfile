@@ -36,11 +36,13 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
 # Install Azure CLI dependencies
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 RUN az extension add -n azure-devops
+RUN which az && az --version
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
+RUN which aws && aws --version
 
 # Install terraform
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
@@ -54,27 +56,36 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
+RUN which terraform && terraform version
 
 # Git update alias
 RUN git config --global alias.update '!git pull --rebase && git submodule update --init --recursive'
 
 # Terraform linting (taken from https://github.com/antonbabenko/pre-commit-terraform)
-RUN curl https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+RUN curl -L https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+RUN which tflint && tflint --version
 
 # Install hadolint
+ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://get.haskellstack.org/ | sh
 RUN stack upgrade && git clone https://github.com/hadolint/hadolint && cd hadolint && stack install
+RUN which hadolint && hadolint --version
 
 # Get golang installed. See: https://stackoverflow.com/questions/52056387/how-to-install-go-in-alpine-linux
 ARG GOLANG_VERSION=1.16
 RUN wget https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
-RUN go version
+ENV PATH=$PATH:"/root/go/bin"
+RUN which go && go version
 
 # Install tfdocs
-RUN go get github.com/terraform-docs/terraform-docs@v0.11.2
-ENV PATH=$PATH:"/root/go/bin"
+RUN VERSION=$(curl --silent "https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest" | jq -r .tag_name) && go get github.com/terraform-docs/terraform-docs@${VERSION}
+RUN which terraform-docs && terraform-docs --version
+
+# Install tfsec
+RUN VERSION=$(curl --silent "https://api.github.com/repos/tfsec/tfsec/releases/latest" | jq -r .tag_name) && go get -ldflags "-X github.com/tfsec/tfsec/version.Version=${VERSION}" github.com/tfsec/tfsec/cmd/tfsec@${VERSION}
+RUN which tfsec && tfsec --version
 
 # Install other small packages
 RUN apt-get update \
@@ -88,11 +99,12 @@ RUN apt-get update \
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-RUN kubectl version --client
+RUN which kubectl && kubectl version --client
 
 # Install helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
 RUN chmod 700 get_helm.sh && ./get_helm.sh
+RUN which helm && helm version
 
 # Install source to image (s2i)
 RUN mkdir /tmp/s2i/ && cd /tmp/s2i/  && \
