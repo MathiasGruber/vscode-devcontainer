@@ -54,4 +54,7 @@ docker build --tag vscode-devcontainer .
 # Run docker image to test insides
 docker run -d --name localdevcontainer vscode-devcontainer
 docker exec -it localdevcontainer bash
+
+# Before releasing, make sure the image is built afresh without cached layers
+docker build --no-cache --tag vscode-devcontainer .
 ```
