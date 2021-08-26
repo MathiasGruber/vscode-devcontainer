@@ -47,7 +47,7 @@ RUN which aws && aws --version
 # Install terraform
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     # Link up to repository before installing
-    && apt-get update \
+    && apt-get --allow-releaseinfo-change update \
     && apt-get install -y software-properties-common --no-install-recommends \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     && apt-get update \
@@ -84,7 +84,7 @@ RUN VERSION=$(curl --silent "https://api.github.com/repos/terraform-docs/terrafo
 RUN which terraform-docs && terraform-docs --version
 
 # Install tfsec
-RUN VERSION=$(curl --silent "https://api.github.com/repos/tfsec/tfsec/releases/latest" | jq -r .tag_name) && go get -ldflags "-X github.com/tfsec/tfsec/version.Version=${VERSION}" github.com/tfsec/tfsec/cmd/tfsec@${VERSION}
+RUN go install github.com/aquasecurity/tfsec/cmd/tfsec@latest
 RUN which tfsec && tfsec --version
 
 # Install other small packages
