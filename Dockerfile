@@ -90,7 +90,7 @@ RUN which tfsec && tfsec --version
 # Install other small packages
 RUN apt-get update \
     # Install additional small packages at the end
-    && apt-get -y --no-install-recommends install -y exa \
+    && apt-get -y --no-install-recommends install -y exa ffmpeg libsm6 libxext6 \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
