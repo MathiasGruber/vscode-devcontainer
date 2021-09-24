@@ -57,6 +57,23 @@ RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     && rm -rf /var/lib/apt/lists/*
 RUN which terraform && terraform version
 
+# Get golang installed. See: https://stackoverflow.com/questions/52056387/how-to-install-go-in-alpine-linux
+ARG GOLANG_VERSION=1.16
+RUN wget https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
+ENV PATH=$PATH:"/root/go/bin"
+RUN which go && go version
+
+# Install other small packages
+RUN apt-get update \
+    # Install additional small packages at the end
+    && apt-get -y --no-install-recommends install -y exa ffmpeg libsm6 libxext6 \
+    # Clean up
+    && apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
 # Git update alias
 RUN git config --global alias.update '!git pull --rebase && git submodule update --init --recursive'
 
@@ -68,32 +85,20 @@ RUN which tflint && tflint --version
 ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://get.haskellstack.org/ | sh
 RUN stack upgrade && git clone https://github.com/hadolint/hadolint && cd hadolint && stack install
+RUN cp /root/.local/bin/hadolint /usr/local/bin/
 RUN which hadolint && hadolint --version
 
-# Get golang installed. See: https://stackoverflow.com/questions/52056387/how-to-install-go-in-alpine-linux
-ARG GOLANG_VERSION=1.16
-RUN wget https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV PATH=$PATH:/usr/local/go/bin
-ENV PATH=$PATH:"/root/go/bin"
-RUN which go && go version
-
 # Install tfdocs
-RUN VERSION=$(curl --silent "https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest" | jq -r .tag_name) && go get github.com/terraform-docs/terraform-docs@${VERSION}
+RUN go install github.com/terraform-docs/terraform-docs@v0.15.0
 RUN which terraform-docs && terraform-docs --version
 
 # Install tfsec
 RUN go install github.com/aquasecurity/tfsec/cmd/tfsec@latest
 RUN which tfsec && tfsec --version
 
-# Install other small packages
-RUN apt-get update \
-    # Install additional small packages at the end
-    && apt-get -y --no-install-recommends install -y exa ffmpeg libsm6 libxext6 \
-    # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+# Copy go installs to vscode user
+ENV PATH=$PATH:/home/vscode/go/bin/
+RUN mkdir -p /home/vscode/go/bin/ && cp -r root/go/bin/* /home/vscode/go/bin/
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
