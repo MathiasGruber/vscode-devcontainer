@@ -88,23 +88,36 @@ RUN pip install --no-cache-dir \
     pre-commit==2.19.0 \
     prospector[with_mypy]==1.7.7
 
-# Get golang installed. See: https://stackoverflow.com/questions/52056387/how-to-install-go-in-alpine-linux
-# ARG GOLANG_VERSION=1.16
-# RUN wget https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-# RUN tar -C /usr/local -xzf go$GOLANG_VERSION.linux-amd64.tar.gz
-# ENV PATH=$PATH:/usr/local/go/bin
-# ENV PATH=$PATH:"/root/go/bin"
-# RUN which go && go version
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+RUN which kubectl && kubectl version --client
+
+# Install helm
+RUN curl -fsSLk -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+RUN chmod 700 get_helm.sh && ./get_helm.sh
+RUN which helm && helm version
+
+# Install source to image (s2i)
+RUN mkdir /tmp/s2i/ && cd /tmp/s2i/  && \
+    curl -sk https://api.github.com/repos/openshift/source-to-image/releases/latest \
+    | grep browser_download_url \
+    | grep linux-amd64 \
+    | cut -d '"' -f 4 \
+    | wget -qi - && \
+    tar xvf source-to-image*.gz && \
+    sudo mv s2i /usr/local/bin && \
+    rm -rf /tmp/s2i/
 
 
-# Install hadolint
+# Install hadolint (Currently not supporting ARM - https://github.com/hadolint/hadolint/issues/411)
 # ENV PATH=$PATH:/root/.local/bin
-# RUN curl -sSL https://get.haskellstack.org/ | sh
+# RUN curl -sSLk https://get.haskellstack.org/ | sh
 # RUN stack upgrade && git clone https://github.com/hadolint/hadolint && cd hadolint && stack install
 # RUN cp /root/.local/bin/hadolint /usr/local/bin/
 # RUN which hadolint && hadolint --version
 
-# Install tfdocs
+# Install tfdocs 
 # RUN go install github.com/terraform-docs/terraform-docs@v0.15.0
 # RUN which terraform-docs && terraform-docs --version
 
@@ -116,29 +129,8 @@ RUN pip install --no-cache-dir \
 #ENV PATH=$PATH:/home/vscode/go/bin/
 #RUN mkdir -p /home/vscode/go/bin/ && cp -r root/go/bin/* /home/vscode/go/bin/
 
-# Install kubectl
-# RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-# RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-# RUN which kubectl && kubectl version --client
-
-# Install helm
-# RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-# RUN chmod 700 get_helm.sh && ./get_helm.sh
-# RUN which helm && helm version
-
-# Install source to image (s2i)
-# RUN mkdir /tmp/s2i/ && cd /tmp/s2i/  && \
-#     curl -s https://api.github.com/repos/openshift/source-to-image/releases/latest \
-#     | grep browser_download_url \
-#     | grep linux-amd64 \
-#     | cut -d '"' -f 4 \
-#     | wget -qi - && \
-#     tar xvf source-to-image*.gz && \
-#     sudo mv s2i /usr/local/bin && \
-#     rm -rf /tmp/s2i/
-
 # Install direnv
-# RUN curl -sfL https://direnv.net/install.sh | bash
+# RUN curl -sfLk https://direnv.net/install.sh | bash
 
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
 # the Docker socket if "overrideCommand": false is set in devcontainer.json.
