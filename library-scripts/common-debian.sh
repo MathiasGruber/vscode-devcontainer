@@ -21,7 +21,6 @@ ADD_NON_FREE_PACKAGES=${7:-"false"}
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 MARKER_FILE="/usr/local/etc/vscode-dev-containers/common"
 
-
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
     exit 1
@@ -78,6 +77,7 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
     package_list="apt-utils \
         openssh-client \
         gnupg2 \
+        dirmngr \
         iproute2 \
         procps \
         lsof \
@@ -113,7 +113,7 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
         manpages \
         manpages-dev \
         init-system-helpers"
-
+        
     # Needed for adding manpages-posix and manpages-posix-dev which are non-free packages in Debian
     if [ "${ADD_NON_FREE_PACKAGES}" = "true" ]; then
         # Bring in variables from /etc/os-release like VERSION_CODENAME
@@ -124,7 +124,7 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
         sed -i -E "s/deb-src http:\/\/(deb|httpredir)\.debian\.org\/debian ${VERSION_CODENAME}-updates main/deb http:\/\/\1\.debian\.org\/debian ${VERSION_CODENAME}-updates main contrib non-free/" /etc/apt/sources.list
         sed -i "s/deb http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}\/updates main/deb http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}\/updates main contrib non-free/" /etc/apt/sources.list
         sed -i "s/deb-src http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}\/updates main/deb http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}\/updates main contrib non-free/" /etc/apt/sources.list
-        sed -i "s/deb http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main/deb http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main contrib non-free/" /etc/apt/sources.list
+        sed -i "s/deb http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main/deb http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main contrib non-free/" /etc/apt/sources.list 
         sed -i "s/deb-src http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main/deb http:\/\/deb\.debian\.org\/debian ${VERSION_CODENAME}-backports main contrib non-free/" /etc/apt/sources.list
         # Handle bullseye location for security https://www.debian.org/releases/bullseye/amd64/release-notes/ch-information.en.html
         sed -i "s/deb http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}-security main/deb http:\/\/security\.debian\.org\/debian-security ${VERSION_CODENAME}-security main contrib non-free/" /etc/apt/sources.list
@@ -140,7 +140,7 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
     if [[ ! -z $(apt-cache --names-only search ^libssl1.1$) ]]; then
         package_list="${package_list}       libssl1.1"
     fi
-
+    
     # Install appropriate version of libssl1.0.x if available
     libssl_package=$(dpkg-query -f '${db:Status-Abbrev}\t${binary:Package}\n' -W 'libssl1\.0\.?' 2>&1 || echo '')
     if [ "$(echo "$LIlibssl_packageBSSL" | grep -o 'libssl1\.0\.[0-9]:' | uniq | sort | wc -l)" -eq 0 ]; then
@@ -155,7 +155,7 @@ if [ "${PACKAGES_ALREADY_INSTALLED}" != "true" ]; then
 
     echo "Packages to verify are installed: ${package_list}"
     apt-get -y install --no-install-recommends ${package_list} 2> >( grep -v 'debconf: delaying package configuration, since apt-utils is not installed' >&2 )
-
+        
     # Install git if not already installed (may be more recent than distro version)
     if ! type git > /dev/null 2>&1; then
         apt-get -y install --no-install-recommends git
@@ -174,19 +174,21 @@ fi
 # Ensure at least the en_US.UTF-8 UTF-8 locale is available.
 # Common need for both applications and things like the agnoster ZSH theme.
 if [ "${LOCALE_ALREADY_SET}" != "true" ] && ! grep -o -E '^\s*en_US.UTF-8\s+UTF-8' /etc/locale.gen > /dev/null; then
-    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen 
     locale-gen
     LOCALE_ALREADY_SET="true"
 fi
 
 # Create or update a non-root user to match UID/GID.
+group_name="${USERNAME}"
 if id -u ${USERNAME} > /dev/null 2>&1; then
     # User exists, update if needed
-    if [ "${USER_GID}" != "automatic" ] && [ "$USER_GID" != "$(id -G $USERNAME)" ]; then
-        groupmod --gid $USER_GID $USERNAME
+    if [ "${USER_GID}" != "automatic" ] && [ "$USER_GID" != "$(id -g $USERNAME)" ]; then 
+        group_name="$(id -gn $USERNAME)"
+        groupmod --gid $USER_GID ${group_name}
         usermod --gid $USER_GID $USERNAME
     fi
-    if [ "${USER_UID}" != "automatic" ] && [ "$USER_UID" != "$(id -u $USERNAME)" ]; then
+    if [ "${USER_UID}" != "automatic" ] && [ "$USER_UID" != "$(id -u $USERNAME)" ]; then 
         usermod --uid $USER_UID $USERNAME
     fi
 else
@@ -196,7 +198,7 @@ else
     else
         groupadd --gid $USER_GID $USERNAME
     fi
-    if [ "${USER_UID}" = "automatic" ]; then
+    if [ "${USER_UID}" = "automatic" ]; then 
         useradd -s /bin/bash --gid $USERNAME -m $USERNAME
     else
         useradd -s /bin/bash --uid $USER_UID --gid $USERNAME -m $USERNAME
@@ -211,7 +213,7 @@ if [ "${USERNAME}" != "root" ] && [ "${EXISTING_NON_ROOT_USER}" != "${USERNAME}"
 fi
 
 # ** Shell customization section **
-if [ "${USERNAME}" = "root" ]; then
+if [ "${USERNAME}" = "root" ]; then 
     user_rc_path="/root"
 else
     user_rc_path="/home/${USERNAME}"
@@ -248,9 +250,9 @@ fi
 # Set the default git editor if not already set
 if [ -z "$(git config --get core.editor)" ] && [ -z "${GIT_EDITOR}" ]; then
     if  [ "${TERM_PROGRAM}" = "vscode" ]; then
-        if [[ -n $(command -v code-insiders) &&  -z $(command -v code) ]]; then
+        if [[ -n $(command -v code-insiders) &&  -z $(command -v code) ]]; then 
             export GIT_EDITOR="code-insiders --wait"
-        else
+        else 
             export GIT_EDITOR="code --wait"
         fi
     fi
@@ -287,7 +289,7 @@ set -e
 if [ -d "/run/systemd/system" ]; then
     exec /bin/systemctl/systemctl "$@"
 else
-    echo '\n"systemd" is not running in this container due to its overhead.\nUse the "service" command to start services intead. e.g.: \n\nservice --status-all'
+    echo '\n"systemd" is not running in this container due to its overhead.\nUse the "service" command to start services instead. e.g.: \n\nservice --status-all'
 fi
 EOF
 chmod +x /usr/local/bin/systemctl
@@ -302,13 +304,15 @@ __bash_prompt() {
         && [ ! -z "${GITHUB_USER}" ] && echo -n "\[\033[0;32m\]@${GITHUB_USER} " || echo -n "\[\033[0;32m\]\u " \
         && [ "$XIT" -ne "0" ] && echo -n "\[\033[1;31m\]➜" || echo -n "\[\033[0m\]➜"`'
     local gitbranch='`\
-        export BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null); \
-        if [ "${BRANCH}" != "" ]; then \
-            echo -n "\[\033[0;36m\](\[\033[1;31m\]${BRANCH}" \
-            && if git ls-files --error-unmatch -m --directory --no-empty-directory -o --exclude-standard ":/*" > /dev/null 2>&1; then \
-                    echo -n " \[\033[1;33m\]✗"; \
-               fi \
-            && echo -n "\[\033[0;36m\]) "; \
+        if [ "$(git config --get codespaces-theme.hide-status 2>/dev/null)" != 1 ]; then \
+            export BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null); \
+            if [ "${BRANCH}" != "" ]; then \
+                echo -n "\[\033[0;36m\](\[\033[1;31m\]${BRANCH}" \
+                && if git ls-files --error-unmatch -m --directory --no-empty-directory -o --exclude-standard ":/*" > /dev/null 2>&1; then \
+                        echo -n " \[\033[1;33m\]✗"; \
+                fi \
+                && echo -n "\[\033[0;36m\]) "; \
+            fi; \
         fi`'
     local lightblue='\[\033[1;34m\]'
     local removecolor='\[\033[0m\]'
@@ -325,14 +329,15 @@ codespaces_zsh="$(cat \
 # Codespaces zsh prompt theme
 __zsh_prompt() {
     local prompt_username
-    if [ ! -z "${GITHUB_USER}" ]; then
+    if [ ! -z "${GITHUB_USER}" ]; then 
         prompt_username="@${GITHUB_USER}"
     else
         prompt_username="%n"
     fi
     PROMPT="%{$fg[green]%}${prompt_username} %(?:%{$reset_color%}➜ :%{$fg_bold[red]%}➜ )" # User/exit code arrow
     PROMPT+='%{$fg_bold[blue]%}%(5~|%-1~/…/%3~|%4~)%{$reset_color%} ' # cwd
-    PROMPT+='$(git_prompt_info)%{$fg[white]%}$ %{$reset_color%}' # Git status
+    PROMPT+='$([ "$(git config --get codespaces-theme.hide-status 2>/dev/null)" != 1 ] && git_prompt_info)' # Git status
+    PROMPT+='%{$fg[white]%}$ %{$reset_color%}'
     unset -f __zsh_prompt
 }
 ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_bold[cyan]%}(%{$fg_bold[red]%}"
@@ -341,24 +346,6 @@ ZSH_THEME_GIT_PROMPT_DIRTY=" %{$fg_bold[yellow]%}✗%{$fg_bold[cyan]%})"
 ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[cyan]%})"
 __zsh_prompt
 
-EOF
-)"
-
-# Add notice that Oh My Bash! has been removed from images and how to provide information on how to install manually
-omb_readme="$(cat \
-<<'EOF'
-"Oh My Bash!" has been removed from this image in favor of a simple shell prompt. If you
-still wish to use it, remove "~/.oh-my-bash" and install it from: https://github.com/ohmybash/oh-my-bash
-You may also want to consider "Bash-it" as an alternative: https://github.com/bash-it/bash-it
-See here for infomation on adding it to your image or dotfiles: https://aka.ms/codespaces/omb-remove
-EOF
-)"
-omb_stub="$(cat \
-<<'EOF'
-#!/usr/bin/env bash
-if [ -t 1 ]; then
-    cat $HOME/.oh-my-bash/README.md
-fi
 EOF
 )"
 
@@ -371,22 +358,8 @@ if [ "${RC_SNIPPET_ALREADY_ADDED}" != "true" ]; then
         echo "${codespaces_bash}" >> "/root/.bashrc"
         echo 'export PROMPT_DIRTRIM=4' >> "/root/.bashrc"
     fi
-    chown ${USERNAME}:${USERNAME} "${user_rc_path}/.bashrc"
+    chown ${USERNAME}:${group_name} "${user_rc_path}/.bashrc"
     RC_SNIPPET_ALREADY_ADDED="true"
-fi
-
-# Add stub for Oh My Bash!
-if [ ! -d "${user_rc_path}/.oh-my-bash}" ] && [ "${INSTALL_OH_MYS}" = "true" ]; then
-    mkdir -p "${user_rc_path}/.oh-my-bash" "/root/.oh-my-bash"
-    echo "${omb_readme}" >> "${user_rc_path}/.oh-my-bash/README.md"
-    echo "${omb_stub}" >> "${user_rc_path}/.oh-my-bash/oh-my-bash.sh"
-    chmod +x "${user_rc_path}/.oh-my-bash/oh-my-bash.sh"
-    if [ "${USERNAME}" != "root" ]; then
-        echo "${omb_readme}" >> "/root/.oh-my-bash/README.md"
-        echo "${omb_stub}" >> "/root/.oh-my-bash/oh-my-bash.sh"
-        chmod +x "/root/.oh-my-bash/oh-my-bash.sh"
-    fi
-    chown -R "${USERNAME}:${USERNAME}" "${user_rc_path}/.oh-my-bash"
 fi
 
 # Optionally install and configure zsh and Oh My Zsh!
@@ -426,7 +399,7 @@ if [ "${INSTALL_ZSH}" = "true" ]; then
         # Copy to non-root user if one is specified
         if [ "${USERNAME}" != "root" ]; then
             cp -rf "${user_rc_file}" "${oh_my_install_dir}" /root
-            chown -R ${USERNAME}:${USERNAME} "${user_rc_path}"
+            chown -R ${USERNAME}:${group_name} "${user_rc_path}"
         fi
     fi
 fi

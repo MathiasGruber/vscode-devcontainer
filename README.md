@@ -48,13 +48,16 @@ FROM nanomathias/vscode-devcontainer:latest
 # Build locally
 
 ```bash
-# Build docker image
-docker build --tag vscode-devcontainer .
+# Setup docker builder
+docker buildx create --name mybuilder --driver-opt network=host --use
+
+# Build docker image (multi-arch version)
+docker buildx build \
+    --push \
+    --tag nanomathias/vscode-devcontainer:release-1.2.0 \
+    --platform linux/amd64,linux/arm64 .
 
 # Run docker image to test insides
-docker run -d --name localdevcontainer vscode-devcontainer
+docker run -d --name localdevcontainer nanomathias/vscode-devcontainer:release-1.2.0
 docker exec -it localdevcontainer bash
-
-# Before releasing, make sure the image is built afresh without cached layers
-docker build --no-cache --tag vscode-devcontainer .
 ```
