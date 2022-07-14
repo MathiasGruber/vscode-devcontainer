@@ -13,10 +13,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
-        USER_UID: 1000
-        USER_GID: 1000
     image: devcontainer
     init: true
     volumes:
@@ -54,10 +50,10 @@ docker buildx create --name mybuilder --driver-opt network=host --use
 # Build docker image (multi-arch version)
 docker buildx build \
     --push \
-    --tag nanomathias/vscode-devcontainer:release-1.2.0 \
+    --tag nanomathias/vscode-devcontainer:release-1.2.1 \
     --platform linux/amd64,linux/arm64 .
 
 # Run docker image to test insides
-docker run -d --name localdevcontainer nanomathias/vscode-devcontainer:release-1.2.0
+docker run -it --rm --privileged nanomathias/vscode-devcontainer:release-1.2.0
 docker exec -it localdevcontainer bash
 ```

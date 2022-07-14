@@ -1,5 +1,5 @@
 # Note: You can use any Debian/Ubuntu based image you want. 
-FROM mcr.microsoft.com/vscode/devcontainers/base:buster
+FROM mcr.microsoft.com/vscode/devcontainers/base:bullseye
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
@@ -37,33 +37,16 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
 
 # Install Azure CLI dependencies
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-RUN az extension add -n azure-devops
-RUN which az && az --version
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
-RUN which aws && aws --version
-
-# Install terraform
-RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
-    # Link up to repository before installing
-    && apt-get --allow-releaseinfo-change update \
-    && apt-get install -y software-properties-common --no-install-recommends \
-    && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update \
-    && apt-get -y --no-install-recommends install terraform g++ gcc libc6-dev libffi-dev libgmp-dev make xz-utils zlib1g-dev git gnupg netbase \
-    # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-RUN which terraform && terraform version
 
 # Install other small packages
 RUN apt-get update \
     # Install additional small packages at the end
-    && apt-get -y --no-install-recommends install -y exa ffmpeg libsm6 libxext6 golang \
+    && apt-get -y --no-install-recommends install -y exa ffmpeg libsm6 libxext6 golang libpq-dev gcc build-essential \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -86,7 +69,8 @@ RUN conda install python=3.10 && conda clean -afy
 RUN pip install --no-cache-dir \
     yapf==0.32.0 pylint==2.14.1 pylint_django==2.5.3 \
     pre-commit==2.19.0 \
-    prospector[with_mypy]==1.7.7
+    prospector[with_mypy]==1.7.7 \
+    hiredis==2.0.0
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -109,6 +93,10 @@ RUN mkdir /tmp/s2i/ && cd /tmp/s2i/  && \
     sudo mv s2i /usr/local/bin && \
     rm -rf /tmp/s2i/
 
+# Install dotenv and keyring for interacting more easily with Azure DevOps PyPi
+RUN wget https://dot.net/v1/dotnet-install.sh
+RUN bash dotnet-install.sh -c 6.0
+RUN pip install artifacts-keyring
 
 # Install hadolint (Currently not supporting ARM - https://github.com/hadolint/hadolint/issues/411)
 # ENV PATH=$PATH:/root/.local/bin
