@@ -27,7 +27,7 @@ RUN apt-get update \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
 
 # Install Node.js, see: https://github.com/nodesource/distributions/blob/master/README.md#debinstall
-RUN curl -sL https://deb.nodesource.com/setup_17.x | bash - \
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
     && apt-get install -y nodejs --no-install-recommends
 
 # Install yarn, see: https://classic.yarnpkg.com/en/docs/install/#debian-stable
