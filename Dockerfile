@@ -72,7 +72,8 @@ RUN pip install --no-cache-dir \
     pre-commit==2.20.0 \
     prospector[with_mypy,with_bandit]==1.7.7 \
     hiredis==2.0.0 \
-    flake8==5.0.4 \
+    flake8==4.0.1 \
+    types-requests==2.28.11.2 \
     isort==5.10.1 \
     black==22.10.0
 

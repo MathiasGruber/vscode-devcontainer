@@ -50,10 +50,10 @@ docker buildx create --name mybuilder --driver-opt network=host --use
 # Build docker image (multi-arch version)
 docker buildx build \
     --push \
-    --tag nanomathias/vscode-devcontainer:release-1.2.2 \
+    --tag nanomathias/vscode-devcontainer:release-1.2.3 \
     --platform linux/amd64,linux/arm64 .
 
 # Run docker image to test insides
-docker run -it --rm --privileged nanomathias/vscode-devcontainer:release-1.2.0
+docker run -it --rm --privileged nanomathias/vscode-devcontainer:release-1.2.3
 docker exec -it localdevcontainer bash
 ```
