@@ -67,10 +67,15 @@ RUN conda install python=3.10 && conda clean -afy
 
 # Install needed libraries
 RUN pip install --no-cache-dir \
-    yapf==0.32.0 pylint==2.14.1 pylint_django==2.5.3 \
-    pre-commit==2.19.0 \
-    prospector[with_mypy]==1.7.7 \
-    hiredis==2.0.0
+    pylint==2.15.5 \
+    pylint_django==2.5.3 \
+    pre-commit==2.20.0 \
+    prospector[with_mypy,with_bandit]==1.7.7 \
+    hiredis==2.0.0 \
+    flake8==4.0.1 \
+    types-requests==2.28.11.2 \
+    isort==5.10.1 \
+    black==22.10.0
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
